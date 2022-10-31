@@ -12,3 +12,13 @@ Mapeamento e análise de espaços livres intraquadra a partir de escolas públic
 * [__FORMIGAS-DE-EMBAÚBA__](https://www.instagram.com/formigasdeembauba/)
 * [__LAB. QUAPÁ__](http://quapa.fau.usp.br/wordpress/)
 * [__MAPBIOMAS__](https://mapbiomas.org/)
+
+Ainda vou adicionar coisas aqui - 
+
+TABELA DE CÓDIGOS DE MAPEAMENTO /CÁLCULO DE ÁREAS 
+    - scripts de classificação 
+    - filtros
+
+TABELA DE CÓDIGOS DA INTERFACE
+    - scripts para geração dos produtos a serem inseridos na plataforma
+    - script da plataforma
