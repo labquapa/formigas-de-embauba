@@ -4,7 +4,7 @@
             <img src='https://user-images.githubusercontent.com/68694598/199020684-ce109cc6-d426-470c-aada-e42ed0f2cf42.png' height='auto' width='165' align='right'>
         </div>
     </div>
-    <h2 class="title toc-ignore">Identificação de áreas aptas para o plantio de miniflorestas e desenvolvimento de interface de visualização</h2>
+    <h2 class="title toc-ignore">IDENTIFICAÇÃO DE ÁREAS APTAS PARA O PLANTIO DE MINIFLORESTAS E DESENVOLVIMENTO DE INTERFACE DE VISUALIZAÇÃO</h2>
 </div>
 
 Mapeamento e análise de espaços livres intraquadra a partir de escolas públicas do município de São Paulo, automatizando a identificação de áreas aptas para o plantio de miniflorestas de Mata Atlântica, realizados por integrantes de:
@@ -16,7 +16,7 @@ Mapeamento e análise de espaços livres intraquadra a partir de escolas públic
 ---
 
 
-<h2>Organização do repositório</h2>
+<h2>ORGANIZAÇÃO DO REPOSITÓRIO</h2>
 
 * O branch ['versão-1'](https://github.com/labquapa/formigas-de-embauba/tree/vers%C3%A3o-1) contém o mapeamento e aplicativo originais, sobre os quais foi desenvolvido um artigo, submetido e aceito no SBSR 2023. Foi utilizado pela formigas-de-embaúba, que identificou diversos pontos a serem modificados.<br>
     * A pasta 'mapeamento' contém os códigos que foram desenvolvidos e executados no Google Earth Engine (GEE) para obter os dados que são utilizados no aplicativo. <br>
@@ -30,7 +30,7 @@ Mapeamento e análise de espaços livres intraquadra a partir de escolas públic
 ---
 
 
-<h2>Dados Coletados</h2>
+<h2>DADOS COLETADOS</h2>
 Para o mapeamento das áreas aptas, foram reunidas as seguintes informações:
 
 <br>
@@ -61,7 +61,11 @@ Para o mapeamento das áreas aptas, foram reunidas as seguintes informações:
 ---
 
 
-<h2>Interfaces</h2>
+<h2>INTERFACES DESENVOLVIDAS</h2>
 
-* [Versão 1 da Interface](https://formigas.users.earthengine.app/view/formigas-de-embauba) <br>
-* [Versão Final da Interface](https://formigas.users.earthengine.app/view/miniflorestas)
+|![Versão 1](https://user-images.githubusercontent.com/115759359/228312825-68c25c7e-46ed-4cc0-9bf5-49831c3e1c59.png)  |  ![Versão 2](https://user-images.githubusercontent.com/115759359/228312338-91fec50e-d054-4ebd-b308-67e093f9b628.png)|
+|:-------------------------:|:-------------------------:|
+|[`Versão 1 da Interface`](https://formigas.users.earthengine.app/view/formigas-de-embauba)   |  [`Versão Final da Interface`](https://formigas.users.earthengine.app/view/miniflorestas)|
+
+
+ 
