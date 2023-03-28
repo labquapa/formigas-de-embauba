@@ -1,290 +1,83 @@
-var maior20 = ee.Image("users/formigas/MSP/OUTPUT/R4_FINAL_MAIOR20_FILTER190");
-var menor20 = ee.Image("users/formigas/MSP/OUTPUT/R4_FINAL_MENOR20_FILTER190");
-var npmenor20 = ee.Image("users/formigas/MSP/OUTPUT/R4_FINAL_NPMENOR20_FILTER190");
-
-var lotesEscolas = ee.FeatureCollection('users/formigas/MSP/MIDPUT/LOTES_CORR_ORIGEM');
-print(lotesEscolas.limit(10))
-
-var quadras = ee.FeatureCollection("users/formigas/MSP/INPUT/GEOSAMPA/SIRGAS_NOVAS_QUADRAS");
-//print(quadras.limit(10))
-var areasPublicas = ee.FeatureCollection("users/formigas/MSP/INPUT/GEOSAMPA/SIRGAS_CadastroAreasPublicas");
-
+var image1 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_TOTAL_FILTER140");
+var image2 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_NPMENOR20_FILTER140");
+var image3 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_NPTOTAL_FILTER140");
 var SPBBox = ee.FeatureCollection("users/formigas/MSP/INPUT/SPBBox");
-var pontosEscolas = ee.FeatureCollection("users/formigas/pts_escolasCorr");
-print(pontosEscolas.limit(10))
+var ptsEscolas = ee.FeatureCollection("users/formigas/MSP/MIDPUT/REV_C/PtsEscolas_Nome_rC");
+var lotes = ee.FeatureCollection("users/formigas/MSP/MIDPUT/REV_C/LotesEscolas_rC");
+
+var testeLot = lotes.first().geometry()
+var inter = lotes.filterBounds(ptsEscolas.first().geometry())
+print(inter)
+Map.addLayer(inter)
+Map.centerObject(inter,15)
+
+// FUNÇÃO DE CORTE DO RASTER, TRANSFORMAÇÃO EM VETOR, CÁLCULO DE ÁREA, FILTRO E EXPORTAÇÃO
+//------------------------------------------------------------------
+var vectorExport = function(image,geometry,description) {
+
+
+var rasterClip = image.clip(geometry);
  
-var teste = pontosEscolas;//.limit(10);
-//print(teste, 'antes');
+var vectors = rasterClip.reduceToVectors({
+  reducer: ee.Reducer.countEvery(),
+  geometry: geometry,
+  scale: 1, 
+  geometryType: "polygon", 
+  eightConnected: true,
+  bestEffort: false, 
+  maxPixels: 4e9
+});
+
+//área total do lote
+var areaGeom = function (geometry) {
+  var calcAreaGeom = geometry.geometry().area(0.5);
+  var setAreaGeom = geometry.set("ArM2_LOTE_DA_" + description, calcAreaGeom);
+  return setAreaGeom;
+};
+
+var geomComArea = geometry.map(areaGeom);
+
+//área da mancha e adição de propriedades
+var areaMancha = function(feat) {
+  var calcAreaMancha = feat.geometry().area(0.5);
+  var associarGeom = geomComArea.filterBounds(feat.geometry())
+  var noLote = associarGeom.first().get('t_NoLote');
+  var areaGeom = associarGeom.first().get("ArM2_LOTE_DA_" + description)
+  var setArea = feat.set('ArM2_' + description, calcAreaMancha)
+                    .set("ArM2_LOTE_DA_" + description,areaGeom)
+                    .set('t_NoLote', noLote);
+  return setArea;
+};
+
+var vectorArea = vectors.map(areaMancha);
+vectorArea = vectorArea.filter(ee.Filter.gte('ArM2_' + description, 140));
 
 
-//Map.centerObject(teste.first(),16);
 
 
+
+Export.table.toAsset({
+  collection: vectorArea, 
+  description: description,
+  assetId: "users/formigas/MSP/OUTPUT/REV_C/REV_C_AREA_" + description
+});
+
+};
+//------------------------------------------------------------------
+
+// Cortar rasters de acordo com os pontos de escolas
+//Map.addLayer(ptsEscolas);
+
+//1) Lotes 
 // FILTRO LOTES
 var lotesArea = function(lote) {
   var area = lote.geometry().area();
   return lote.set('Área Lote', area);
 };
 
-var lotesFilt = lotesEscolas.map(lotesArea);
-lotesFilt = lotesFilt.filter(ee.Filter.lte('Área Lote', 30000));
-//print(lotesFilt.size())
+var lotesFilt = lotes.map(lotesArea);
+lotesFilt = lotesFilt.filter(ee.Filter.lte('Área Lote', 150000));
 
-
-// FILTRO QUADRAS
-quadras = quadras.filterBounds(pontosEscolas);
-print(quadras.size())
-
-var quadrasArea = function(quadra) {
-  var area = quadra.geometry().area();
-  return quadra.set('Área Quadra', area);
-};
-
-var quadrasFilt = quadras.map(quadrasArea);
-quadrasFilt = quadrasFilt.filter(ee.Filter.lte('Área Quadra', 150000));
-print(quadrasFilt.size())
-
-
-// PROPRIEDADE CODESMEC NUMBER
-var tranString = function(loteEscola) {
-  var string = loteEscola.get('CODESCMEC');
-  var number = ee.Number.parse(string);
-  return loteEscola.set('CODESCMEC_N',number);
-};
-
-var lotesEscolasNum = lotesFilt.map(tranString);
-//print(lotesEscolasNum)
-
-// PROPRIEDADE FLOAT 'qe_id'
-var tranFloat = function(quadra) {
-  var long = quadra.get('qe_id');
-  var number = ee.Number(long).float();
-  return quadra.set('qe_idf', number);
-};
-
-var quadrasNum = quadrasFilt.map(tranFloat);
-//print(lotesEscolasNum)
-
-
-
-
-var image = menor20;
-
-var getArea1 = function(ponto){
-  //var areaImage = ee.Image.pixelArea().divide(10000);
-  var areaImage = ee.Image.pixelArea();
-  areaImage = areaImage.multiply(image);
-  
-  var loteEsc = ponto.getNumber('eq_cd_mec');
-  var featureLote = lotesEscolasNum.filter(ee.Filter.eq('COD_MEC', loteEsc)).geometry();
-
-
-  var statLote = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureLote,
-                scale: 1,
-                maxPixels: 1e9
-              });
-
-  var areaLote = statLote.get('area');
-  
-  //ÁREA QUADRA
-  var quadra_id = ponto.get('qe_id');
-  var featureQuadra = quadrasNum.filter(ee.Filter.eq('qe_idf', quadra_id)).geometry();
-
-  var statQuadra = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureQuadra,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaQuadra = statQuadra.get('area');
-  
-  //ÁREA BUFFER
-  /*var escBuffer = ponto.get('NO_ENTIDAD');
-  var featureBuffer = buffers.filter(ee.Filter.eq('NO_ENTIDAD', escBuffer)).geometry();*/
-  var escbuffer = ponto.buffer(500);
-  var featureBuffer = escbuffer.bounds().geometry();
-
-  var statBuffer = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureBuffer,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaBuffer = statBuffer.get('area');
-
-  //ÁREA PÚBLICA
-  var featureAreaPublica = areasPublicas.filterBounds(featureBuffer).geometry();
-  
-  var statAreaPublica = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureAreaPublica,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaAreaPublica = statAreaPublica.get('area');
-  
-  return ponto.set('0_LOTE - Declividade < 20%', areaLote)
-              .set('0_QUADRA - Declividade < 20%', areaQuadra)
-              .set('0_BUFFER - Declividade < 20%', areaBuffer)
-              .set('0_AP - Declividade < 20%', areaAreaPublica);
-};
-
-var prim = teste.map(getArea1);
-
-
-
-
-
-
-
-
-var image = maior20;
-
-var getArea2 = function(ponto){
-  //var areaImage = ee.Image.pixelArea().divide(10000);
-  var areaImage = ee.Image.pixelArea();
-  areaImage = areaImage.multiply(image);
-  
-  var loteEsc = ponto.getNumber('eq_cd_mec');
-  var featureLote = lotesEscolasNum.filter(ee.Filter.eq('COD_MEC', loteEsc)).geometry();
-
-
-  var statLote = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureLote,
-                scale: 1,
-                maxPixels: 1e9
-              });
-
-  var areaLote = statLote.get('area');
-  
-  //ÁREA QUADRA
-  var quadra_id = ponto.get('qe_id');
-  //print(quadra_id)
-  var featureQuadra = quadrasNum.filter(ee.Filter.eq('qe_idf', quadra_id)).geometry();
-
-
-  var statQuadra = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureQuadra,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaQuadra = statQuadra.get('area');
-  
-  //ÁREA BUFFER
-  /*var escBuffer = ponto.get('NO_ENTIDAD');
-  var featureBuffer = buffers.filter(ee.Filter.eq('NO_ENTIDAD', escBuffer)).geometry();*/
-  var escbuffer = ponto.buffer(500);
-  var featureBuffer = escbuffer.bounds().geometry();
-
-  var statBuffer = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureBuffer,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaBuffer = statBuffer.get('area');
-
-  //ÁREA PÚBLICA
-  var featureAreaPublica = areasPublicas.filterBounds(featureBuffer).geometry();
-  
-  var statAreaPublica = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureAreaPublica,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaAreaPublica = statAreaPublica.get('area');
-  
-  return ponto.set('1_LOTE - Declividade > 20%', areaLote)
-              .set('1_QUADRA - Declividade > 20%', areaQuadra)
-              .set('1_BUFFER - Declividade > 20%', areaBuffer)
-              .set('1_AP - Declividade > 20%', areaAreaPublica);
-};
-
-var seg = prim.map(getArea2);
-
- 
-
-
-var image = npmenor20;
-
-var getArea3 = function(ponto){
-  //var areaImage = ee.Image.pixelArea().divide(10000);
-  var areaImage = ee.Image.pixelArea();
-  areaImage = areaImage.multiply(image);
-  
-  var loteEsc = ponto.getNumber('eq_cd_mec');
-  var featureLote = lotesEscolasNum.filter(ee.Filter.eq('COD_MEC', loteEsc)).geometry();
-
-
-  var statLote = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureLote,
-                scale: 1,
-                maxPixels: 1e9
-              });
-
-  var areaLote = statLote.get('area');
-  
-  //ÁREA QUADRA
-  var quadra_id = ponto.get('qe_id');
-  //print(quadra_id)
-  var featureQuadra = quadrasNum.filter(ee.Filter.eq('qe_idf', quadra_id)).geometry();
-
-  var statQuadra = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureQuadra,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaQuadra = statQuadra.get('area');
-  
-  //ÁREA BUFFER
-  /*var escBuffer = ponto.get('NO_ENTIDAD');
-  var featureBuffer = buffers.filter(ee.Filter.eq('NO_ENTIDAD', escBuffer)).geometry();*/
-  var escbuffer = ponto.buffer(500);
-  var featureBuffer = escbuffer.bounds().geometry();
-
-
-  var statBuffer = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureBuffer,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaBuffer = statBuffer.get('area');
-
-  //ÁREA PÚBLICA
-  var featureAreaPublica = areasPublicas.filterBounds(featureBuffer).geometry();
-  
-  var statAreaPublica = areaImage.reduceRegion({
-                reducer: ee.Reducer.sum(),
-                geometry: featureAreaPublica,
-                scale: 1,
-                maxPixels: 1e9
-              });
- 
-  var areaAreaPublica = statAreaPublica.get('area');
-  
-  return ponto.set('2_LOTE - NP Declividade < 20%', areaLote)
-              .set('2_QUADRA - NP Declividade < 20%', areaQuadra)
-              .set('2_BUFFER - NP Declividade < 20%', areaBuffer)
-              .set('2_AP - NP Declividade < 20%', areaAreaPublica);
-};
-
-var ter = seg.map(getArea3);
-
-Export.table.toAsset(ter,'TabelaFINAL','users/formigas/MSP/OUTPUT/TabelaFINAL');
-Export.table.toDrive(ter,'TabelaFINAL','Earth Engine');
+var LOTE_1EXPORT = vectorExport(image1,lotes,'MANCHA_ALT');
+var LOTE_2EXPORT = vectorExport(image2,lotes,'MANCHA_NPMEN20');
+var LOTE_3EXPORT = vectorExport(image3,lotes,'MANCHA_NPTOTAL');
