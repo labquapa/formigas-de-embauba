@@ -13,7 +13,8 @@ Mapeamento e análise de espaços livres intraquadra a partir de escolas públic
 * [__LAB. QUAPÁ__](http://quapa.fau.usp.br/wordpress/)
 * [__MAPBIOMAS__](https://mapbiomas.org/)
 
-<br>
+---
+
 
 <h2>Organização do repositório</h2>
 
@@ -26,11 +27,28 @@ Mapeamento e análise de espaços livres intraquadra a partir de escolas públic
     * A pasta 'mapeamento' contém os códigos que foram desenvolvidos e executados no Google Earth Engine (GEE) para obter os dados que são utilizados no aplicativo. <br>
     * A pasta 'interface' possui o código que dá origem ao aplicativo. Neste código, há todos os dados que foram obtidos/coletados acessíveis como assets abertos no GEE.
 
-<br>
+---
+
 
 <h2>Dados Coletados</h2>
-Para o mapeamento das áreas aptas, foram reunidas as seguintes informações: 
+Para o mapeamento das áreas aptas, foram reunidas as seguintes informações:
 
+<br>
+<br>
+
+| DADO          | ORIGEM        | ANO |
+| :------------:|:-------------:| :---:|
+| Lotes das escolas públicas de São Paulo | [Departamento de Urbanismo da Secretaria Municipal de Desenvolvimento Urbano (SMDU/DEURB)](https://gestaourbana.prefeitura.sp.gov.br/marco-regulatorio/planos-regionais/arquivos/)| 2016 | 
+| Altura de vegetação (VHM) | [LiDAR  pré-processado e disponibilizados na plataforma Kaggle](https://www.kaggle.com/datasets/andasampa/height-model?select=0-VHM-sao-paulo-city.tif) | 2017 |
+| Altura de edificações (BHM) | [LiDAR pré-processado e disponibilizados na plataforma Kaggle](https://www.kaggle.com/datasets/andasampa/height-model?select=0-BHM-sao-paulo-city.tif) | 2017 |
+| Modelo digital de terreno (MDT) |[LiDAR pré-processado e disponibilizados na plataforma Kaggle](https://www.kaggle.com/datasets/andasampa/dtm-dsm-sao-paulo?select=MDT_sampa-ZSTD.tif) | 2017 |
+| Pontos das escolas públicas de São Paulo | [Dados georreferenciados dos equipamentos de educação localizados no município de São Paulo - GeoSampa](https://geosampa.prefeitura.sp.gov.br/PaginasPublicas/_SBC.aspx) | 2018 |
+| Áreas públicas, quadras e lotes | [Polígonos georreferenciados no município de São Paulo - GeoSampa](https://geosampa.prefeitura.sp.gov.br/PaginasPublicas/_SBC.aspx) | 2019 |
+| Listagem das escolas públicas de São Paulo  |  [microdados do censo escolar da educação básica de 2021](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar)| 2021 |
+|Imagens de satélite mensais de resolução espacial de 4,77 m | [Dados da Planet & NICFI para o monitoramento de florestas tropicais](https://developers.google.com/earth-engine/datasets/catalog/projects_planet-nicfi_assets_basemaps_americas) | 2021 |
+|Uso e Cobertura da Terra| [MapBiomas](https://mapbiomas.org/)| 2022 |
+
+<!-- 
 1. Listagem das escolas, obtida a partir dos [microdados do censo escolar da educação básica de 2021](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar) realizados pelo Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira (INEP).
 2. [Lotes das escolas públicas de São Paulo](https://gestaourbana.prefeitura.sp.gov.br/marco-regulatorio/planos-regionais/arquivos/), identificados em mapeamento realizado pelo Departamento de Urbanismo da Secretaria Municipal de Desenvolvimento Urbano (SMDU/DEURB) da Prefeitura Municipal de São Paulo (PMSP). 
 3. Pontos das escolas, obtidos a partir dos dados georreferenciados de 2018 dos equipamentos de educação localizados no município de São Paulo, disponibilizados no repositório [GeoSampa](https://geosampa.prefeitura.sp.gov.br/PaginasPublicas/_SBC.aspx) da PMSP. 
@@ -38,8 +56,10 @@ Para o mapeamento das áreas aptas, foram reunidas as seguintes informações:
 5. [Imagens de satélite mensais do ano de 2021 de resolução espacial de 4,77 m](https://developers.google.com/earth-engine/datasets/catalog/projects_planet-nicfi_assets_basemaps_americas), dados da Planet & NICFI para o monitoramento de florestas tropicais, disponibilizados no GEE. 
 6. Dados de altura de vegetação [(VHM)](https://www.kaggle.com/datasets/andasampa/height-model?select=0-VHM-sao-paulo-city.tif), de altura de edificações [(BHM)](https://www.kaggle.com/datasets/andasampa/height-model?select=0-BHM-sao-paulo-city.tif) e modelo digital de terreno [(MDT)](https://www.kaggle.com/datasets/andasampa/dtm-dsm-sao-paulo?select=MDT_sampa-ZSTD.tif), obtidos a partir de dados LiDAR de 2017 e disponibilizados na plataforma Kaggle, com resolução espacial de 50cm.  
 7. Dados de Uso e Cobertura da Terra da Coleção 7 do MapBiomas, disponibilizada em 2022 na plataforma do [MapBiomas](https://mapbiomas.org/). 
+ -->
+ 
+---
 
-<br>
 
 <h2>Interfaces</h2>
 
