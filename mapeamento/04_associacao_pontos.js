@@ -1,83 +1,66 @@
-var image1 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_TOTAL_FILTER140");
-var image2 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_NPMENOR20_FILTER140");
-var image3 = ee.Image("users/formigas/MSP/OUTPUT/REV_A_LIVRE_NPTOTAL_FILTER140");
-var SPBBox = ee.FeatureCollection("users/formigas/MSP/INPUT/SPBBox");
+
+// ASSETS
+//-----------------------------------------------------------------------------------
+
+var MANCHAS_ALT = ee.FeatureCollection('users/formigas/MSP/OUTPUT/REV_C/REV_C_AREA_MANCHA_ALT');
+var MANCHAS_NPTOTAL = ee.FeatureCollection('users/formigas/MSP/OUTPUT/REV_C/REV_C_AREA_MANCHA_NPTOTAL');
+var MANCHAS_NPMENOR = ee.FeatureCollection('users/formigas/MSP/OUTPUT/REV_C/REV_C_AREA_MANCHA_NPMEN20');
+
 var ptsEscolas = ee.FeatureCollection("users/formigas/MSP/MIDPUT/REV_C/PtsEscolas_Nome_rC");
-var lotes = ee.FeatureCollection("users/formigas/MSP/MIDPUT/REV_C/LotesEscolas_rC");
+print("ptsEscolas", ptsEscolas);
 
-var testeLot = lotes.first().geometry()
-var inter = lotes.filterBounds(ptsEscolas.first().geometry())
-print(inter)
-Map.addLayer(inter)
-Map.centerObject(inter,15)
+  
+// DEFINIÇÃO FUNÇÃO
+//-----------------------------------------------------------------------------------
 
-// FUNÇÃO DE CORTE DO RASTER, TRANSFORMAÇÃO EM VETOR, CÁLCULO DE ÁREA, FILTRO E EXPORTAÇÃO
-//------------------------------------------------------------------
-var vectorExport = function(image,geometry,description) {
+var setAreaTotalMancha = function(pontos, poligonos, description){
+  
+  var lista_poligonos_com_manchas = poligonos.distinct('t_NoLote').aggregate_array('t_NoLote');
+  var escolas_com_manchas = pontos.filter(ee.Filter.inList('t_NoLote',lista_poligonos_com_manchas));
+  
+  var lista_escolas_totais = pontos.aggregate_array('t_NoEsco');
+  var lista_escolas_com_manchas = escolas_com_manchas.aggregate_array('t_NoEsco');
+  var lista_escolas_sem_manchas = lista_escolas_totais.removeAll(lista_escolas_com_manchas);
+  var escolas_sem_manchas = pontos.filter(ee.Filter.inList('t_NoEsco',lista_escolas_sem_manchas));
 
+  var setProperties = escolas_com_manchas.map(function(pt){
 
-var rasterClip = image.clip(geometry);
- 
-var vectors = rasterClip.reduceToVectors({
-  reducer: ee.Reducer.countEvery(),
-  geometry: geometry,
-  scale: 1, 
-  geometryType: "polygon", 
-  eightConnected: true,
-  bestEffort: false, 
-  maxPixels: 4e9
+  var feat_ID = pt.get("t_NoLote");
+  //print(feat_ID);
+  var manchas_ptEscola = poligonos.filter(ee.Filter.eq("t_NoLote", feat_ID));
+  //print(manchas_ptEscola);
+  var areaTotalManchas = manchas_ptEscola.aggregate_sum('ArM2_' + description);
+  //print(areaTotalManchas);
+  var areaTotalLote = manchas_ptEscola.aggregate_max("ArM2_LOTE_DA_" + description);
+  //print(areaTotalLote);
+  var porcentagem = areaTotalManchas.divide(areaTotalLote).multiply(100);
+  //print(porcentagem);
+  return pt.set("ArM2_TOTAL_" + description, areaTotalManchas)
+           .set("%_" + description + '_DO_LOTE', porcentagem);
+
+    });
+    
+var setEmptyProperties = escolas_sem_manchas.map(function(pt){
+  return pt.set("ArM2_TOTAL_" + description, 0)
+           .set("%_" + description + '_DO_LOTE', 0);
 });
 
-//área total do lote
-var areaGeom = function (geometry) {
-  var calcAreaGeom = geometry.geometry().area(0.5);
-  var setAreaGeom = geometry.set("ArM2_LOTE_DA_" + description, calcAreaGeom);
-  return setAreaGeom;
-};
-
-var geomComArea = geometry.map(areaGeom);
-
-//área da mancha e adição de propriedades
-var areaMancha = function(feat) {
-  var calcAreaMancha = feat.geometry().area(0.5);
-  var associarGeom = geomComArea.filterBounds(feat.geometry())
-  var noLote = associarGeom.first().get('t_NoLote');
-  var areaGeom = associarGeom.first().get("ArM2_LOTE_DA_" + description)
-  var setArea = feat.set('ArM2_' + description, calcAreaMancha)
-                    .set("ArM2_LOTE_DA_" + description,areaGeom)
-                    .set('t_NoLote', noLote);
-  return setArea;
-};
-
-var vectorArea = vectors.map(areaMancha);
-vectorArea = vectorArea.filter(ee.Filter.gte('ArM2_' + description, 140));
+  return setProperties.merge(setEmptyProperties);
+ };
 
 
 
+// RODAR FUNÇÃO
+//-----------------------------------------------------------------------------------
 
+// LOTES
 
-Export.table.toAsset({
-  collection: vectorArea, 
-  description: description,
-  assetId: "users/formigas/MSP/OUTPUT/REV_C/REV_C_AREA_" + description
-});
+var set_ALT = setAreaTotalMancha(ptsEscolas, MANCHAS_ALT,'MANCHA_ALT');
+print(set_ALT);
+var set_NPTOTAL = setAreaTotalMancha(set_ALT, MANCHAS_NPTOTAL,'MANCHA_NPTOTAL');
+print(set_NPTOTAL);
+var set_NPMENOR20 = setAreaTotalMancha(set_NPTOTAL, MANCHAS_NPMENOR, 'MANCHA_NPMEN20');
+print(set_NPMENOR20)
 
-};
-//------------------------------------------------------------------
-
-// Cortar rasters de acordo com os pontos de escolas
-//Map.addLayer(ptsEscolas);
-
-//1) Lotes 
-// FILTRO LOTES
-var lotesArea = function(lote) {
-  var area = lote.geometry().area();
-  return lote.set('Área Lote', area);
-};
-
-var lotesFilt = lotes.map(lotesArea);
-lotesFilt = lotesFilt.filter(ee.Filter.lte('Área Lote', 150000));
-
-var LOTE_1EXPORT = vectorExport(image1,lotes,'MANCHA_ALT');
-var LOTE_2EXPORT = vectorExport(image2,lotes,'MANCHA_NPMEN20');
-var LOTE_3EXPORT = vectorExport(image3,lotes,'MANCHA_NPTOTAL');
+Export.table.toDrive({collection: set_NPMENOR20, description: 'REV_C_TABELA_10-02', folder: 'Earth Engine'});
+Export.table.toAsset({collection: set_NPMENOR20, description: 'REV_C_TABELA_10-02', assetId: 'users/formigas/MSP/OUTPUT/REV_C/REV_C_TABELA_10-02'});
